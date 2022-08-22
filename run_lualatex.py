@@ -6,6 +6,9 @@ import shutil
 import subprocess
 import sys
 
+from pathlib import Path
+
+
 ARGS_COUNT = 10
 
 # Walk through all externals. If they start with the special prefix
@@ -66,7 +69,7 @@ shutil.copy("texmf/texmf-dist/scripts/texlive/fmtutil.pl", "bin/mktexfmt")
 return_code = subprocess.call(
     args=[
         latexrun_file,
-        "--latex-args=-shell-escape -jobname=" + job_name,
+        "--latex-args=-shell-escape",
         "--latex-cmd=lualatex",
         "-Wall",
     ] + sys.argv[ARGS_COUNT:] + [main_file],
@@ -74,4 +77,6 @@ return_code = subprocess.call(
 )
 if return_code != 0:
     sys.exit(return_code)
-os.rename(job_name + ".pdf", output_file)
+
+latex_output_file = Path(main_file).stem + Path(output_file).suffix
+os.rename(latex_output_file, output_file)

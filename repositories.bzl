@@ -5644,7 +5644,7 @@ def latex_repositories():
             name = name,
             build_file_content = """
 exports_files(
-    ["kpsewhich", "luatex", "bibtex", "biber"],
+    ["kpsewhich", "luatex", "bibtex", "biber", "dvisvgm", "dvips"],
     visibility = ["//visibility:public"],
 )
 """,
@@ -5691,7 +5691,30 @@ filegroup(
         strip_prefix = "latexrun-38ff6ec2815654513c91f64bdf2a5760c85da26e",
         url = "https://github.com/aclements/latexrun/archive/38ff6ec2815654513c91f64bdf2a5760c85da26e.tar.gz",
     )
+    
+    http_archive(
+        name = "rules_foreign_cc",
+        sha256 = "2a4d07cd64b0719b39a7c12218a3e507672b82a97b98c6a89d38565894cf7c51",
+        strip_prefix = "rules_foreign_cc-0.9.0",
+        url = "https://github.com/bazelbuild/rules_foreign_cc/archive/refs/tags/0.9.0.tar.gz",
+    )
 
+    _ALL_CONTENT = """\
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:public"],
+)
+"""
+
+    http_archive(
+        name = "ghost_script_source",
+        sha256 = "89a4e73be3edc3e40c46892332f29b0f7ed6003b0b952697e708aed2444d9ed1",
+        strip_prefix = "ghostpdl-ghostpdl-9.26",
+        build_file_content = _ALL_CONTENT,
+        url = "https://github.com/ArtifexSoftware/ghostpdl/archive/refs/tags/ghostpdl-9.26.tar.gz",
+    )
+    
     native.register_toolchains(
         "@bazel_latex//:latex_toolchain_amd64-freebsd",
         "@bazel_latex//:latex_toolchain_x86_64-darwin",
