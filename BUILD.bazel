@@ -35,14 +35,6 @@ latex_toolchain(
 )
 
 filegroup(
-    name = "ghostscript_dependencies",
-    srcs = [
-        "@texlive_texmf__texmf-dist__dvips__base",
-    ],
-    visibility = ["//visibility:public"],
-)
-
-filegroup(
     name = "core_dependencies",
     srcs = [
         "@bazel_latex//:run_lualatex.py",
@@ -79,12 +71,6 @@ py_binary(
     visibility = ["//visibility:public"],
 )
 
-sh_binary(
-    name = "tool_wrapper",
-    srcs = ["@bazel_latex//:tool_wrapper.sh"],
-    visibility = ["//visibility:public"],
-)
-
 py_binary(
     name = "tool_wrapper_py",
     srcs = ["tool_wrapper.py"],
@@ -95,14 +81,20 @@ py_binary(
 
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
 
+filegroup(
+    name = "ghostscript_dependencies",
+    srcs = [
+        "@texlive_texmf__texmf-dist__dvips__base",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 configure_make(
     name = "lib_ghost_script_configure",
     configure_in_place = True,
     autogen = True,
-    #autogen_options = ["--prefix=/usr"],
     install_prefix = "output",
     lib_source = "@ghost_script_source//:all_srcs",
-    #out_lib_dir = "sobin",
     targets = ["so", "soinstall"],
     out_shared_libs = ["libgs.so"],
     visibility = ["//visibility:public"]
