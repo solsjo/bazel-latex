@@ -1,6 +1,6 @@
-LatexOutputInfo = provider(fields = ['dvi', 'pdf'])
+LatexOutputInfo = provider(fields = ['format', 'file'])
 
-def _latex_pdf_impl(ctx):
+def _latex_impl(ctx):
     toolchain = ctx.toolchains["@bazel_latex//:latex_toolchain_type"].latexinfo
     custom_dependencies = []
     for srcs in ctx.attr.srcs:
@@ -43,13 +43,10 @@ def _latex_pdf_impl(ctx):
         outputs = outs,
         tools = [ctx.executable.tool],
     )
-    if "pdf" in ext:
-        latex_info = LatexOutputInfo(pdf = outs[0])
-    else:
-        latex_info = LatexOutputInfo(dvi = outs[0])
+    latex_info = LatexOutputInfo(file = outs[0], format=ext)
     return [DefaultInfo(files=depset(outs)), latex_info]
 
-_latex_pdf = rule(
+_latex = rule(
     attrs = {
         "main": attr.label(allow_files = True),
         "srcs": attr.label_list(allow_files = True),
@@ -68,16 +65,20 @@ _latex_pdf = rule(
         ),
     },
     toolchains = ["@bazel_latex//:latex_toolchain_type"],
-    implementation = _latex_pdf_impl,
+    implementation = _latex_impl,
 )
 
-def _dvi_to_svg_impl(ctx):
+def _latex_to_svg_impl(ctx):
     toolchain = ctx.toolchains["@bazel_latex//:latex_toolchain_type"].latexinfo
     out_file = ctx.actions.declare_file(ctx.label.name + ".svg")
-    dvis = []
+    inputs = []
+    cmd_flags = ["-b", "min"]
     src = ctx.attr.src
     if LatexOutputInfo in src:
-        dvis.append(src[LatexOutputInfo].pdf)
+        inputs.append(src[LatexOutputInfo].file)
+        input_format = src[LatexOutputInfo].format
+        if "pdf" in input_format:
+            cmd_flags.append("--pdf")
     else:
         fail("LatexOutputInfo provider not available in src")
    
@@ -99,13 +100,12 @@ def _dvi_to_svg_impl(ctx):
         arguments = [
             toolchain.kpsewhich.files.to_list()[0].path,
             toolchain.dvisvgm.files.to_list()[0].path,
-            toolchain.dvips.files.to_list()[0].path,
             ctx.files._libgs[0].path,
             ctx.label.name,
-            dvis[0].path,
+            inputs[0].path,
             outs[0].path,
             custom_dependencies,
-        ] + ["-P", "-b", "min"],
+        ] + cmd_flags,
         inputs = depset(
             direct = ctx.files.src + 
                      ctx.files.deps +
@@ -114,7 +114,6 @@ def _dvi_to_svg_impl(ctx):
             transitive = [
                 toolchain.kpsewhich.files,
                 toolchain.dvisvgm.files,
-                toolchain.dvips.files
             ],
         ),
         outputs = outs,
@@ -126,11 +125,6 @@ _dvi_to_svg = rule(
     attrs = {
         "src": attr.label(),
         "deps": attr.label_list(allow_files = True),
-        "_tool_wrapper": attr.label(
-            default="@bazel_latex//:tool_wrapper",
-            executable = True,
-            cfg = "host",
-        ),
         "_libgs": attr.label(default="@bazel_latex//:lib_ghost_script_configure"),
         "_tool_wrapper_py": attr.label(
             default = Label("@bazel_latex//:tool_wrapper_py"),
@@ -142,9 +136,11 @@ _dvi_to_svg = rule(
     implementation = _dvi_to_svg_impl,
 )
 
-def latex_document(name, main, srcs = [], tags = [], cmd_flags = []):
-    # PDF generation.
-    _latex_pdf(
+def latex_document(name, main, srcs = [], tags = [], cmd_flags = [], format="pdf"):
+    if "pdf" not in format:
+        cmd_flags + ["--latex-args=--output-format=dvi"]
+
+    _latex(
         name = name,
         srcs = srcs + ["@bazel_latex//:core_dependencies"],
         main = main,
@@ -152,42 +148,32 @@ def latex_document(name, main, srcs = [], tags = [], cmd_flags = []):
         cmd_flags = cmd_flags,
     )
 
-    # Convenience rule for viewing PDFs.
-    native.sh_binary(
-        name = name + "_view_output",
-        srcs = ["@bazel_latex//:view_pdf.sh"],
-        data = [":" + name],
-        tags = tags,
-    )
+    if "pdf" not in format:
+         # Convenience rule for viewing PDFs.
+         native.sh_binary(
+             name = name + "_view_output",
+             srcs = ["@bazel_latex//:view_pdf.sh"],
+             data = [":" + name],
+             tags = tags,
+         )
 
-    # Convenience rule for viewing PDFs.
-    native.sh_binary(
-        name = name + "_view",
-        srcs = ["@bazel_latex//:view_pdf.sh"],
-        data = [":" + name],
-        args = ["None"],
-        tags = tags,
-    )
+         # Convenience rule for viewing PDFs.
+         native.sh_binary(
+             name = name + "_view",
+             srcs = ["@bazel_latex//:view_pdf.sh"],
+             data = [":" + name],
+             args = ["None"],
+             tags = tags,
+         )
     
-def tex_to_svg(name, main, srcs = [], tags = [], cmd_flags = [], deps = []):
-    # PDF and dvi generation.
-    _latex_pdf(
-        name = name + "_dvi",
-        srcs = srcs + [
-            "@bazel_latex//:core_dependencies",
-            "@bazel_latex//:ghostscript_dependencies",
-        ],
-        main = main,
-        tags = tags,
-        cmd_flags = cmd_flags, #["--latex-args=--output-format=dvi"],
-    )
+def latex_to_svg(name, src, deps = [], **kwargs):
 
-    _dvi_to_svg(
+    _latex_to_svg(
         name = name,
-        src = ":" + name + "_dvi",
+        src = src,
         deps = deps + [
             "@bazel_latex//:core_dependencies",
             "@bazel_latex//:ghostscript_dependencies",
         ],
-        tags = tags,
+        **kwargs
     )

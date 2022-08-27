@@ -22,8 +22,11 @@ load("@bazel_latex//:repositories.bzl", "latex_repositories")
 
 latex_repositories()
 
+# Needed for building ghostscript
+# Which is needed by dvisvgm,
+# dvisvgm is part of the texlive toolchain,
+# but cannot produce correct svg files without dynamically
+# linking to ghostscript.
 load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
 
-# This sets up some common toolchains for building targets. For more details, please see
-# https://bazelbuild.github.io/rules_foreign_cc/0.9.0/flatten.html#rules_foreign_cc_dependencies
 rules_foreign_cc_dependencies()

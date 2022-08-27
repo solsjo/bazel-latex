@@ -1,6 +1,6 @@
 LatexInfo = provider(
     doc = "Information about how to invoke the latex compiler",
-    fields = ["kpsewhich", "luatex", "bibtex", "biber", "dvisvgm", "dvips"],
+    fields = ["kpsewhich", "luatex", "bibtex", "biber", "dvisvgm"],
 )
 
 def _latex_toolchain_info_impl(ctx):
@@ -12,7 +12,6 @@ def _latex_toolchain_info_impl(ctx):
                 bibtex = ctx.attr.bibtex,
                 biber = ctx.attr.biber,
                 dvisvgm = ctx.attr.dvisvgm,
-                dvips = ctx.attr.dvips,
             ),
         ),
     ]
@@ -44,11 +43,6 @@ _latex_toolchain_info = rule(
             cfg = "host",
             executable = True,
         ),
-        "dvips": attr.label(
-            allow_single_file = True,
-            cfg = "host",
-            executable = True,
-        ),
     },
     implementation = _latex_toolchain_info_impl,
 )
@@ -61,7 +55,6 @@ def latex_toolchain(platform, exec_compatible_with):
         bibtex = "@texlive_bin__%s//:bibtex" % platform,
         biber = "@texlive_bin__%s//:biber" % platform,
         dvisvgm = "@texlive_bin__%s//:dvisvgm" % platform,
-        dvips = "@texlive_bin__%s//:dvips" % platform,
         visibility = ["//visibility:public"],
     )
 
