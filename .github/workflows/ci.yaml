@@ -1,0 +1,22 @@
+name: Build and Deploy
+on: [push]
+permissions:
+  contents: write
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+      - uses: mishas/setup-bazelisk-action@v1
+      - name: Mount bazel cache  # Optional
+        uses: actions/cache@v1
+        with:
+          path: "~/.cache/bazel"
+          key: bazel
+      - name: build
+        shell: bash
+        run: >
+            bazelisk build //example:example_svg;
+            bazelisk build //...;
+            
