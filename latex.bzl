@@ -79,8 +79,77 @@ _latex = rule(
     implementation = _latex_impl,
 )
 
-def latex_document(name, main, srcs = [], tags = [], cmd_flags = [], format="pdf"):
+def _latex_to_svg_impl(ctx):
+    toolchain = ctx.toolchains["@bazel_latex//:latex_toolchain_type"].latexinfo
+   
+    custom_dependencies = []
+    for deps in ctx.attr.deps:
+        for file in deps.files.to_list():
+            if file.dirname not in custom_dependencies:
+                custom_dependencies.append(file.dirname)
+    custom_dependencies = ','.join(custom_dependencies)
 
+    src = ctx.attr.src
+    if LatexOutputInfo in src:
+        input_file = src[LatexOutputInfo].file
+        input_format = src[LatexOutputInfo].format
+    else:
+        fail("LatexOutputInfo provider not available in src")
+
+    flags = []
+    if "pdf" in input_format:
+        flags.append("--flag=--pdf")
+    for cmd in ctx.attr.cmd_flags:
+       flags.append("--flag="+cmd) 
+ 
+    ctx.actions.run(
+        mnemonic = "DviSvgM",
+        use_default_shell_env = True,
+        executable = ctx.executable._tool,
+        arguments = [
+            "--dep-tool=" + toolchain.kpsewhich.files.to_list()[0].path,
+            "--tool=" + toolchain.dvisvgm.files.to_list()[0].path,
+            "--env=LIBGS" + ":" + ctx.files._libgs[0].dirname + "/lib/libgs.so",
+            "--input=" + input_file.path,
+            "--output=" + ctx.outputs.out.path,
+            "--tool-output=" + input_file.basename.rsplit(".", 1)[0] + ".svg",
+            "--inputs=" + custom_dependencies,
+        ] + flags,
+        inputs = depset(
+            direct = ctx.files.src + 
+                     ctx.files.deps +
+                     [toolchain.dvisvgm.files.to_list()[0]] +
+                     ctx.files._libgs,
+            transitive = [
+                toolchain.kpsewhich.files,
+                toolchain.dvisvgm.files,
+            ],
+        ),
+        outputs = [ctx.outputs.out],
+        tools = [ctx.executable._tool],
+    )
+
+_latex_to_svg = rule(
+    attrs = {
+        "src": attr.label(),
+        "deps": attr.label_list(allow_files = True),
+        "cmd_flags": attr.string_list(
+            allow_empty = True,
+            default = [],
+        ),
+        "_libgs": attr.label(default="@bazel_latex//third_party:lib_ghost_script_configure"),
+        "_tool": attr.label(
+            default = Label("@bazel_latex//:tool_wrapper_py"),
+            executable = True,
+            cfg = "host",
+        ),
+    },
+    outputs = {"out": "%{name}.svg"},
+    toolchains = ["@bazel_latex//:latex_toolchain_type"],
+    implementation = _latex_to_svg_impl,
+)
+
+def latex_document(name, main, srcs = [], tags = [], cmd_flags = [], format="pdf"):
     _latex(
         name = name,
         srcs = srcs + ["@bazel_latex//:core_dependencies"],
@@ -107,3 +176,15 @@ def latex_document(name, main, srcs = [], tags = [], cmd_flags = [], format="pdf
              args = ["None"],
              tags = tags,
          )
+    
+def latex_to_svg(name, src, deps = [], **kwargs):
+
+    _latex_to_svg(
+        name = name,
+        src = src,
+        deps = deps + [
+            "@bazel_latex//:core_dependencies",
+            "@bazel_latex//third_party:ghostscript_dependencies",
+        ],
+        **kwargs
+    )

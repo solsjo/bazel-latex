@@ -1,4 +1,4 @@
-load("@bazel_latex//:latex.bzl", "latex_document")
+load("@bazel_latex//:latex.bzl", "latex_document", "latex_to_svg")
 
 latex_document(
     name = "my_report",
@@ -25,4 +25,15 @@ latex_document(
     ],
     cmd_flags = ["--bibtex-cmd=biber"],
     main = "my_report.tex",
+)
+
+latex_document(
+    name = "my_standalone_figure",
+    srcs = ["@bazel_latex//packages:drawstack"],
+    main = "tikz.tex",
+)
+
+latex_to_svg(
+    name = "example_svg",
+    src = ":my_standalone_figure",
 )

@@ -71,3 +71,4 @@ py_binary(
     main = "tool_wrapper.py",
     visibility = ["//visibility:public"],
 )
+
