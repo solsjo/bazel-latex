@@ -19,7 +19,13 @@ jobs:
             bazelisk build //example:example_svg;
             bazelisk build //...;
          elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install important_windows_software
+              choco install autotools;
+              bazelisk build example:example_svg;
+              bazelisk build ...;
+         elif [ "$RUNNER_OS" == "macOS" ]; then
+            brew install automake;
+            bazelisk build //example:example_svg;
+            bazelisk build //...;
          else
               echo "$RUNNER_OS not supported"
               exit 1
