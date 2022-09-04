@@ -15,6 +15,10 @@ configure_make(
     install_prefix = "output",
     lib_source = "@ghost_script_source//:all_srcs",
     targets = ["so", "soinstall"],
+    env = select({
+         "@platforms//os:macos":{"LDFLAGS":"-L/usr/lib"},
+         "//conditions:default": {},
+    }),
     out_shared_libs =  select({
          "@platforms//os:macos": ["libgs.dylib"],
          "@platforms//os:windows": ["libgs.dll"],
