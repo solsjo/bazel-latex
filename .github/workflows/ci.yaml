@@ -23,7 +23,10 @@ jobs:
               bazelisk build example:example_svg;
               bazelisk build ...;
          elif [ "$RUNNER_OS" == "macOS" ]; then
-            brew install autoconf automake libtool;
+            brew install automake libtool;
+            brew install autoconf@2.69 && \
+            brew link --overwrite autoconf@2.69 && \
+            autoconf -V
             bazelisk build //example:example_svg;
             bazelisk build //...;
          else
