@@ -6,7 +6,7 @@ jobs:
   build-and-deploy:
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest] #, windows-latest]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout 🛎️
@@ -23,7 +23,7 @@ jobs:
               bazelisk build example:example_svg;
               bazelisk build ...;
          elif [ "$RUNNER_OS" == "macOS" ]; then
-            brew install automake;
+            brew install autoconf automake libtool;
             bazelisk build //example:example_svg;
             bazelisk build //...;
          else
