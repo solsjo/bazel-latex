@@ -14,7 +14,15 @@ jobs:
       - uses: mishas/setup-bazelisk-action@v1
       - name: build
         shell: bash
-        run: >
+        run:   |
+         if [ "$RUNNER_OS" == "Linux" ]; then
             bazelisk build //example:example_svg;
             bazelisk build //...;
+         elif [ "$RUNNER_OS" == "Windows" ]; then
+              choco install important_windows_software
+         else
+              echo "$RUNNER_OS not supported"
+              exit 1
+         fi
+
             
