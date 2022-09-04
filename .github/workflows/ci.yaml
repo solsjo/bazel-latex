@@ -27,7 +27,7 @@ jobs:
             brew install autoconf@2.69 && \
             brew link --overwrite autoconf@2.69 && \
             autoconf -V
-            bazelisk build //example:example_svg --verbose_failures --sandbox_debug;
+            bazelisk build //example:example_svg --verbose_failures --sandbox_debug || : && cat private/var/tmp/_bazel_runner/b74eea281dbe13e28b834834c76399f5/execroot/bazel_latex/bazel-out/_tmp/actions/stdout-13;
          else
               echo "$RUNNER_OS not supported"
               exit 1
