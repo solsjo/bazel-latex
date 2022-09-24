@@ -12,6 +12,24 @@ configure_make(
     name = "lib_ghost_script_configure",
     configure_in_place = True,
     autogen = True,
+    autogen_options = select({
+         "@platforms//os:macos": [
+              --disable-compile-inits,
+              --disable-cups,
+              --disable-gtk,
+              --without-x,
+         ],
+         "//conditions:default": [],
+    }),
+    configure_options = select({
+         "@platforms//os:macos": [
+              --disable-compile-inits,
+              --disable-cups,
+              --disable-gtk,
+              --without-x,
+         ],
+         "//conditions:default": [],
+    }),
     install_prefix = "output",
     lib_source = "@ghost_script_source//:all_srcs",
     targets = ["so", "soinstall"],
@@ -26,3 +44,9 @@ configure_make(
     }),
     visibility = ["//visibility:public"]
 )
+
+#     --disable-compile-inits
+#      --disable-cups
+#      --disable-gtk
+#      --with-system-libtiff
+#      --without-x
