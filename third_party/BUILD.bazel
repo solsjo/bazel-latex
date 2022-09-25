@@ -19,6 +19,7 @@ configure_make(
               "--disable-gtk",
               "--without-x",
               "--disable-fontconfig",
+              "--disable-debug"
          ],
          "//conditions:default": [],
     }),
@@ -29,6 +30,7 @@ configure_make(
               "--disable-gtk",
               "--without-x",
               "--disable-fontconfig",
+              "--disable-debug"
          ],
          "//conditions:default": [],
     }),
