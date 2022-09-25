@@ -38,7 +38,7 @@ configure_make(
     lib_source = "@ghost_script_source//:all_srcs",
     targets = ["so", "soinstall"],
     env = select({
-         "@platforms//os:macos":{"LDFLAGS":"-L/usr/lib", "CFLAGS": "-DDEBUG" },
+         "@platforms//os:macos":{ "CFLAGS": "-DDEBUG" },
          "//conditions:default": {},
     }),
     out_shared_libs =  select({
