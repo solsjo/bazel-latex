@@ -188,12 +188,17 @@ def latex_to_svg(name, src, deps = [], **kwargs):
     _latex_to_svg(
         name = name,
         src = src,
-        deps = deps + [
-            "@bazel_latex//:core_dependencies",
-            "@bazel_latex//third_party:ghostscript_dependencies"
-        ],
+        #deps = deps + [
+        #    "@bazel_latex//:core_dependencies",
+        #    "@bazel_latex//third_party:ghostscript_dependencies"
+        #],
+        deps = deps + ["@bazel_latex//:core_dependencies"] + select({
+         "@platforms//os:macos": [],
+         "@platforms//os:windows": [],
+         "//conditions:default": ["@bazel_latex//third_party:ghostscript_dependencies"],
+        }),
         libgs_ext = select({
-         "@platforms//os:macos": "/{}/libgs.dylib",
+         "@platforms//os:macos": "/usr/local/lib/libgs.dylib",
          "@platforms//os:windows": "\\{}\\libgs.dll",
          "//conditions:default": "/{}/libgs.so",
         }),
